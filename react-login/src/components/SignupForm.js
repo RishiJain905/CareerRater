@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import TermsModal from './TermsModal';
 
 const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
   const [formData, setFormData] = useState({
@@ -10,6 +11,7 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Backend API endpoint
   const SIGNUP_ENDPOINT = 'http://localhost:3000/api/auth/signup';
@@ -125,8 +127,9 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-800 text-center mb-8">Sign Up</h2>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-2xl font-semibold text-gray-800 text-center mb-8">Sign Up</h2>
       
       {/* Name Field */}
       <div>
@@ -232,9 +235,13 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
           />
           <span className="ml-2 text-sm text-gray-600">
             I agree to the{' '}
-            <a href="#" className="text-primary-600 hover:text-primary-700 transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              className="text-primary-600 hover:text-primary-700 transition-colors underline"
+            >
               Terms & Conditions
-            </a>
+            </button>
           </span>
         </label>
         {errors.agreeTerms && (
@@ -263,6 +270,13 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
         </button>
       </p>
     </form>
+
+    {/* Terms and Conditions Modal */}
+    <TermsModal 
+      isOpen={showTermsModal} 
+      onClose={() => setShowTermsModal(false)} 
+    />
+  </>
   );
 };
 
