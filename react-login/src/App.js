@@ -48,7 +48,8 @@ function App() {
           {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold text-gray-800 mb-2">CareerRater</h1>
-            <p className="text-gray-600">Welcome back! Please sign in to your account</p>
+            <p className="text-gray-600"> {currentForm === 'login' ? "Welcome back! Please sign in to your account"
+            : "Welcome! Please create an account below" }</p>
           </div>
 
           {/* Message Display */}
