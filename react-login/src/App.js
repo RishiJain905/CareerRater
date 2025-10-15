@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
+import HomePage from './components/HomePage';
 import Message from './components/Message';
 
 function App() {
   const [currentForm, setCurrentForm] = useState('login'); // 'login' or 'signup'
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Dummy user database (will be replaced with Supabase later)
+  const [dummyUsers, setDummyUsers] = useState([
+    { email: 'test@example.com', password: 'Test123', name: 'Test User' },
+    { email: 'demo@careerRater.com', password: 'Demo123', name: 'Demo User' }
+  ]);
 
   const switchToSignup = () => {
     setCurrentForm('signup');
@@ -24,6 +33,55 @@ function App() {
       setMessage({ text: '', type: '' });
     }, 5000);
   };
+
+  const handleLogin = (email, password) => {
+    // Check if user exists in dummy database
+    const user = dummyUsers.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+      showMessage('Login successful! Welcome back.', 'success');
+      return true;
+    } else {
+      showMessage('Invalid email or password. Try test@example.com / Test123', 'error');
+      return false;
+    }
+  };
+
+  const handleSignup = (name, email, password) => {
+    // Check if user already exists
+    const userExists = dummyUsers.find(u => u.email === email);
+    
+    if (userExists) {
+      showMessage('This email is already registered. Please login.', 'error');
+      return false;
+    }
+
+    // Add new user to dummy database
+    const newUser = { email, password, name };
+    setDummyUsers([...dummyUsers, newUser]);
+    showMessage('Account created successfully! Please sign in.', 'success');
+    
+    // Switch to login after 2 seconds
+    setTimeout(() => {
+      switchToLogin();
+    }, 2000);
+    
+    return true;
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setCurrentForm('login');
+    showMessage('You have been logged out successfully.', 'success');
+  };
+
+  // If user is authenticated, show HomePage
+  if (isAuthenticated) {
+    return <HomePage user={currentUser} onLogout={handleLogout} />;
+  }
 
   return (
     <div className="min-h-screen gradient-bg flex items-center justify-center p-5">
@@ -62,11 +120,13 @@ function App() {
             <LoginForm 
               onSwitchToSignup={switchToSignup}
               onShowMessage={showMessage}
+              onLogin={handleLogin}
             />
           ) : (
             <SignupForm 
               onSwitchToLogin={switchToLogin}
               onShowMessage={showMessage}
+              onSignup={handleSignup}
             />
           )}
         </div>

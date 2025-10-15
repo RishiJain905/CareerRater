@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const LoginForm = ({ onSwitchToSignup, onShowMessage }) => {
+const LoginForm = ({ onSwitchToSignup, onShowMessage, onLogin }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -8,9 +8,6 @@ const LoginForm = ({ onSwitchToSignup, onShowMessage }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-
-  // Backend API endpoint
-  const LOGIN_ENDPOINT = 'http://localhost:3000/api/auth/login';
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -56,53 +53,28 @@ const LoginForm = ({ onSwitchToSignup, onShowMessage }) => {
 
     setIsLoading(true);
 
-    try {
-      const response = await fetch(LOGIN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          rememberMe: formData.rememberMe
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Success - store token and redirect
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-          if (formData.rememberMe) {
-            localStorage.setItem('rememberUser', 'true');
-          }
-        }
-        
-        onShowMessage('Login successful! Redirecting...', 'success');
-        
-        // Redirect after short delay
-        setTimeout(() => {
-          window.location.href = '/index.html'; // Change to your dashboard/home page
-        }, 1500);
-        
-      } else {
-        // Error from backend
-        onShowMessage(data.message || 'Login failed. Please try again.', 'error');
+    // Use dummy authentication instead of API call
+    setTimeout(() => {
+      const success = onLogin(formData.email, formData.password);
+      
+      if (success && formData.rememberMe) {
+        localStorage.setItem('rememberUser', 'true');
       }
-
-    } catch (error) {
-      console.error('Login error:', error);
-      onShowMessage('Network error. Please check your connection and try again.', 'error');
-    } finally {
+      
       setIsLoading(false);
-    }
+    }, 1000); // Simulate network delay
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <h2 className="text-2xl font-semibold text-gray-800 text-center mb-8">Sign In</h2>
+      
+      {/* Demo Credentials Info */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+        <p className="text-xs font-semibold text-blue-900 mb-1">🔐 Demo Credentials:</p>
+        <p className="text-xs text-blue-800">Email: <span className="font-mono">test@example.com</span></p>
+        <p className="text-xs text-blue-800">Password: <span className="font-mono">Test123</span></p>
+      </div>
       
       {/* Email Field */}
       <div>

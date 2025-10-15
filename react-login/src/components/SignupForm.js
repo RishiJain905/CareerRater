@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import TermsModal from './TermsModal';
 
-const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
+const SignupForm = ({ onSwitchToLogin, onShowMessage, onSignup }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,9 +12,6 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-
-  // Backend API endpoint
-  const SIGNUP_ENDPOINT = 'http://localhost:3000/api/auth/signup';
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -88,42 +85,11 @@ const SignupForm = ({ onSwitchToLogin, onShowMessage }) => {
 
     setIsLoading(true);
 
-    try {
-      const response = await fetch(SIGNUP_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Success
-        onShowMessage('Account created successfully! Please sign in.', 'success');
-        
-        // Switch to login form after delay
-        setTimeout(() => {
-          onSwitchToLogin();
-          // You could pre-fill email here if needed
-        }, 2000);
-        
-      } else {
-        // Error from backend
-        onShowMessage(data.message || 'Signup failed. Please try again.', 'error');
-      }
-
-    } catch (error) {
-      console.error('Signup error:', error);
-      onShowMessage('Network error. Please check your connection and try again.', 'error');
-    } finally {
+    // Use dummy signup instead of API call
+    setTimeout(() => {
+      onSignup(formData.name, formData.email, formData.password);
       setIsLoading(false);
-    }
+    }, 1000); // Simulate network delay
   };
 
   return (
