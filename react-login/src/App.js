@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import HomePage from './components/HomePage';
+import CompanyDetail from './components/CompanyDetail';
 import Message from './components/Message';
 
 function App() {
@@ -80,7 +82,15 @@ function App() {
 
   // If user is authenticated, show HomePage
   if (isAuthenticated) {
-    return <HomePage user={currentUser} onLogout={handleLogout} />;
+    return (
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomePage user={currentUser} onLogout={handleLogout} />} />
+          <Route path="/company/:companyId" element={<CompanyDetail user={currentUser} onLogout={handleLogout} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    );
   }
 
   return (

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { searchLocalCompanies, filterCompanies } from '../services/localCompanyDB';
 
 const HomePage = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [companies, setCompanies] = useState([]);
@@ -367,7 +369,7 @@ const HomePage = ({ user, onLogout }) => {
                   <div 
                     key={company.id}
                     className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer border border-gray-200 hover:border-blue-300"
-                    onClick={() => {/* TODO: Navigate to company detail page */}}
+                    onClick={() => navigate(`/company/${company.id}`)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-4">
