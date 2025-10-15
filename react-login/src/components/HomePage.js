@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { searchLocalCompanies, filterCompanies } from '../services/localCompanyDB';
 
 const HomePage = ({ user, onLogout }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [filteredCompanies, setFilteredCompanies] = useState([]);
   const [filters, setFilters] = useState({
     location: '',
     industry: '',
@@ -10,10 +13,81 @@ const HomePage = ({ user, onLogout }) => {
     rating: ''
   });
 
+  // Load all companies on mount
+  useEffect(() => {
+    const allCompanies = searchLocalCompanies('');
+    setCompanies(allCompanies);
+    setFilteredCompanies(allCompanies);
+  }, []);
+
+  // Apply filters whenever they change
+  useEffect(() => {
+    let results = [...companies];
+
+    // Apply search query
+    if (searchQuery.trim() !== '') {
+      results = searchLocalCompanies(searchQuery);
+    }
+
+    // Apply filters
+    results = filterCompanies({
+      ...filters,
+      // Override with current results
+      _data: results
+    });
+
+    // If we have active filters, filter the results
+    if (filters.location || filters.industry || filters.companySize || filters.rating) {
+      results = results.filter(company => {
+        let matches = true;
+
+        if (filters.location && filters.location !== '') {
+          matches = matches && company.location.toLowerCase().includes(filters.location.toLowerCase());
+        }
+
+        if (filters.industry && filters.industry !== '') {
+          matches = matches && company.industry.toLowerCase().includes(filters.industry.toLowerCase());
+        }
+
+        if (filters.companySize && filters.companySize !== '') {
+          const employeeCount = parseInt(company.employees.replace(/[^0-9]/g, ''));
+          switch(filters.companySize) {
+            case '1-50':
+              matches = matches && employeeCount <= 50;
+              break;
+            case '51-200':
+              matches = matches && employeeCount > 50 && employeeCount <= 200;
+              break;
+            case '201-1000':
+              matches = matches && employeeCount > 200 && employeeCount <= 1000;
+              break;
+            case '1001-10000':
+              matches = matches && employeeCount > 1000 && employeeCount <= 10000;
+              break;
+            case '10001+':
+              matches = matches && employeeCount > 10000;
+              break;
+            default:
+              break;
+          }
+        }
+
+        if (filters.rating && filters.rating !== '') {
+          const minRating = parseFloat(filters.rating);
+          matches = matches && company.rating >= minRating;
+        }
+
+        return matches;
+      });
+    }
+
+    setFilteredCompanies(results);
+  }, [searchQuery, filters, companies]);
+
   const handleSearch = (e) => {
     e.preventDefault();
-    // TODO: Implement API search when backend is ready
-    console.log('Searching for:', searchQuery);
+    const results = searchLocalCompanies(searchQuery);
+    setFilteredCompanies(results);
   };
 
   const handleFilterChange = (filterName, value) => {
@@ -282,52 +356,76 @@ const HomePage = ({ user, onLogout }) => {
             <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">Explore Companies</h2>
               <p className="text-sm text-gray-500">
-                {/* Will show count when API is connected */}
-                Ready to discover your next workplace
+                {filteredCompanies.length} {filteredCompanies.length === 1 ? 'company' : 'companies'} found
               </p>
             </div>
 
-            {/* Placeholder Job Cards - Will be populated with API data */}
+            {/* Company Cards - Real Data! */}
             <div className="space-y-4">
-              {/* Example Job Card 1 */}
-              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer border border-gray-200 hover:border-blue-300">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center font-bold text-blue-900 text-xl">
-                      TC
+              {filteredCompanies.length > 0 ? (
+                filteredCompanies.map((company) => (
+                  <div 
+                    key={company.id}
+                    className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer border border-gray-200 hover:border-blue-300"
+                    onClick={() => {/* TODO: Navigate to company detail page */}}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-4">
+                        {/* Company Logo */}
+                        <img 
+                          src={company.logo} 
+                          alt={`${company.name} logo`}
+                          className="w-16 h-16 rounded-lg object-contain bg-gray-50 p-2"
+                          onError={(e) => {
+                            // Fallback if logo fails to load
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(company.name)}&size=64&background=1e3a8a&color=fff&bold=true`;
+                          }}
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold text-gray-800 mb-1">{company.name}</h3>
+                          <p className="text-sm text-gray-500 mb-2">
+                            {company.employees} employees • {company.location}
+                          </p>
+                          <p className="text-sm text-gray-600 line-clamp-2">
+                            {company.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center space-x-1 mb-1">
+                          <span className="text-2xl">⭐</span>
+                          <span className="text-xl font-bold text-gray-800">{company.rating.toFixed(1)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500">{company.reviewCount.toLocaleString()} reviews</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800 mb-1">Tech Company</h3>
-                      <p className="text-sm text-gray-500 mb-2">10,000+ employees • Multiple locations</p>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        Leading technology company specializing in innovative solutions...
-                      </p>
+                    <div className="mt-4 flex gap-2">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                        {company.industry}
+                      </span>
+                      {company.rating >= 4.0 && (
+                        <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                          Highly Rated
+                        </span>
+                      )}
+                      {company.location.includes('Canada') && (
+                        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">
+                          🇨🇦 Canada
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-1 mb-1">
-                      <span className="text-2xl">⭐</span>
-                      <span className="text-xl font-bold text-gray-800">4.2</span>
-                    </div>
-                    <p className="text-xs text-gray-500">1.2K reviews</p>
-                  </div>
+                ))
+              ) : (
+                // No results message
+                <div className="bg-yellow-50 border-2 border-dashed border-yellow-200 rounded-lg p-8 text-center">
+                  <div className="text-4xl mb-3">�</div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">No companies found</h3>
+                  <p className="text-gray-600 text-sm">
+                    Try adjusting your search or filters to find more companies.
+                  </p>
                 </div>
-                <div className="mt-4 flex gap-2">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Technology</span>
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">Great benefits</span>
-                </div>
-              </div>
-
-              {/* Placeholder message when no API data */}
-              <div className="bg-blue-50 border-2 border-dashed border-blue-200 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-3">🚀</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">More companies coming soon!</h3>
-                <p className="text-gray-600 text-sm">
-                  We're building the database of companies for you to explore and rate.
-                  <br />
-                  The search and filter features will be powered by our API integration.
-                </p>
-              </div>
+              )}
             </div>
           </main>
         </div>
